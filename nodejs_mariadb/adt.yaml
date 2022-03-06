@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-deployment
+  #namespace: eks-tutorial
+  labels:
+    app: users-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: users-app
+  template:
+    metadata:
+      labels:
+        app: users-app
+    spec:
+      containers:
+      - name: users
+        image: $YOUR_ID.dkr.ecr.ap-northeast-2.amazonaws.com/demo-nodejs-mariadb-3345ccc:latest # mariadb
+        imagePullPolicy: Always
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: DB_PASSWORD
+              name: adt-auth
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: adt-config
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              key: DB_USER
+              name: adt-config
+        - name: DB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              key: DB_DATABASE
+              name: adt-config
+        ports:
+        - containerPort: 80
+        # resources:
+        #   limits:
+        #     cpu: 1
+        #     memory: 1Gi
+        #   requests:
+        #     cpu: 1
+        #     memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service
+  #namespace: eks-tutorial
+  labels:
+    app: users-app
+spec:
+  selector:
+    app: users-app
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  
